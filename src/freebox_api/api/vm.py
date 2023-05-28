@@ -80,7 +80,7 @@ class Vm:
     
     async def get_task(self, id):
         """
-        Gets rezise task status
+        Gets resize or create task status
         """
         return await self._access.get('vm/disk/task/{0}'.format(id))
     
