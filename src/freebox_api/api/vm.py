@@ -116,7 +116,7 @@ class Vm:
         else: sshkey = ''
         if 'seefbx' in conf: seefbx = (conf['seefbx'] == 'True')
         else: seefbx = False
-        return await self.format_cloudinit_data(usr, pwd, sshkey, seefbx)
+        return self.format_cloudinit_data(usr, pwd, sshkey, seefbx)
 
     async def create(self, data, decodedir=True):
         """
