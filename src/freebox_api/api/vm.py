@@ -35,6 +35,12 @@ class Vm:
         """
         return await self._access.get('vm/')
 
+    async def get_system_info(self):
+        """
+        Gets system informations
+        """
+        return await self._access.get('vm/info')
+
     async def get_config_vm(self, id):
         """
         Gets VM #id configuration
