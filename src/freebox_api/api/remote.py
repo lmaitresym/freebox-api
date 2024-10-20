@@ -2,6 +2,7 @@
 Remote API.
 No public documentation available yet.
 """
+
 import asyncio
 from asyncio import TimeoutError as Timeout
 from typing import Any
@@ -9,7 +10,7 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
-from aiohttp import ServerDisconnectedError
+from aiohttp import ClientTimeout, ServerDisconnectedError
 
 from freebox_api.access import Access
 
@@ -180,7 +181,7 @@ class Remote:
                     long_press=key_data.get("long"),  # type: ignore
                     repeat=key_data.get("repeat"),  # type: ignore
                 ),
-                timeout=_DEFAULT_TIMEOUT,
+                timeout=ClientTimeout(total=_DEFAULT_TIMEOUT),
                 skip_auto_headers=[
                     "Accept",
                     "Accept-Encoding",
