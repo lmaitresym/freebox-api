@@ -4,11 +4,75 @@ https://dev.freebox.fr/sdk/os/download/
 """
 
 import base64
-from typing import Any
+
+import sys
+
+if sys.version_info < (3, 12):
+    from typing_extensions import Required
+else:
+    from typing import Required
+from typing import Any, TypedDict, Union, List
 from typing import Dict
 from typing import Optional
 
 from freebox_api.access import Access
+
+
+class _DownloadAddURL(TypedDict, total=False):
+    """
+    Add download by URL parameters data structure.
+
+    https://dev.freebox.fr/sdk/os/download/#adding-by-url
+
+    download_url : `str` – The URL
+    download_url_list : `str` – A list of URL separated by a new line delimiter
+    (use download_url or download_url_list)
+    download_dir : `str` – The download destination directory
+    (optional: will use the configuration download_dir by default)
+    recursive : `bool` – If true the download will be recursive
+    username : `str` – Auth username (optional)
+    password : `str` – Auth password (optional)
+    archive_password : `str` – The password required to extract downloaded content
+    (only relevant for nzb)
+    cookies : `str` – The http cookies (to be able to pass session cookies along with url)
+    """
+
+    download_dir: str
+    recursive: bool
+    username: str
+    password: str
+    archive_password: str
+    cookies: str
+
+
+class DownloadAddURL(_DownloadAddURL):
+    """Add download by URL parameters data structure."""
+
+    download_url: Required[str]
+
+
+class DownloadAddURLList(_DownloadAddURL):
+    """Add download by URL list parameters data structure."""
+
+    download_url_list: Required[str]
+
+
+class DownloadAddFile(TypedDict, total=False):
+    """
+    Add download by file upload parameters data structure.
+
+    https://dev.freebox.fr/sdk/os/download/#adding-by-file-upload
+
+    download_file : `str` – The download file (must be uploaded using multipart/form-data
+    download_dir : `str` – The download destination directory
+    (optional: will use the configuration download_dir by default)
+    archive_password : `str` – The password required to extract downloaded content
+    (only relevant for nzb)
+    """
+
+    download_file: Required[str]
+    download_dir: str
+    archive_password: str
 
 
 class Download:
@@ -19,8 +83,14 @@ class Download:
     def __init__(self, access: Access) -> None:
         self._access = access
 
-    download_url_schema = {
+    download_url_schema: DownloadAddURL = {
         "download_url": "",
+        "username": "",
+        "password": "",
+        "recursive": False,
+        "download_dir": "",
+    }
+    download_url_list_schema: DownloadAddURLList = {
         "download_url_list": "",  # items separated by /n
         "username": "",
         "password": "",
@@ -102,25 +172,88 @@ class Download:
         """
         return await self._access.get(f"downloads/{download_id}/log/")  # type: ignore
 
+    async def add_download_task(
+        self,
+        download_params: Union[DownloadAddURL, DownloadAddURLList, DownloadAddFile],
+    ) -> Dict[str, Any]:
+        """
+        Add download from params
+
+        download_params : `dict`
+        """
+        return await self._access.post("downloads/add/", download_params)
+
     async def add_download_task_from_url(
-        self, download_url: Dict[str, Any]
+        self,
+        download_url: str,
+        download_dir: Optional[str] = None,
+        archive_password: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Add download from url
 
         download_url : `str`
+        download_dir : `str`, optional
+            Default to None
+        archive_password : `str`, optional
+            Default to None
         """
-        return await self._access.post("downloads/add/", download_url)
+        download_params: DownloadAddURL = {
+            "download_url": download_url,
+        }
+        if download_dir:
+            download_params["download_dir"] = download_dir
+        if archive_password:
+            download_params["archive_password"] = archive_password
+        return await self.add_download_task(download_params)
+
+    async def add_download_task_from_urls(
+        self,
+        download_urls: List[str],
+        download_dir: Optional[str] = None,
+        archive_password: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Add download from url
+
+        download_urls : `list[str]`
+        download_dir : `str`, optional
+            Default to None
+        archive_password : `str`, optional
+            Default to None
+        """
+        download_params: DownloadAddURLList = {
+            "download_url_list": "/n".join(download_urls),
+        }
+        if download_dir:
+            download_params["download_dir"] = download_dir
+        if archive_password:
+            download_params["archive_password"] = archive_password
+        return await self.add_download_task(download_params)
 
     async def add_download_task_from_file(
-        self, download_file: Dict[str, Any]
+        self,
+        download_file: str,
+        download_dir: Optional[str] = None,
+        archive_password: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Add download from file
 
-        download_file : `dict`
+        download_file : `str`
+        download_dir : `str`, optional
+            Default to None
+        archive_password : `str`, optional
+            Default to None
         """
-        return await self._access.post("downloads/add/", download_file)
+        download_params: DownloadAddFile = {
+            "download_file": download_file,
+        }
+        if download_dir:
+            download_params["download_dir"] = download_dir
+        if archive_password:
+            download_params["archive_password"] = archive_password
+        return await self.add_download_task(download_params)
 
     # Download Stats
 
