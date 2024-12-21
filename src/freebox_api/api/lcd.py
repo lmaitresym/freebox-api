@@ -1,11 +1,34 @@
+"""
+LCD API.
+https://dev.freebox.fr/sdk/os/lcd/
+"""
+
+from freebox_api.access import Access
+
+
 class Lcd:
-    def __init__(self, access):
+    """
+    LCD
+    """
+
+    def __init__(self, access: Access):
         self._access = access
 
     lcd_config_schema = {
         "orientation": 0,
         "brightness": 100,
         "orientation_forced": False,
+        "available_led_strip_animations": [
+            "organic",
+            "static",
+            "breathing",
+            "rain",
+            "trail",
+            "wave",
+        ],
+        "led_strip_brightness": 56,
+        "led_strip_animation": "breathing",
+        "led_strip_enabled": True,
     }
 
     async def get_configuration(self):
